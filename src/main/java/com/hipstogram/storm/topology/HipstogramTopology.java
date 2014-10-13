@@ -16,18 +16,22 @@
 package com.hipstogram.storm.topology;
 
 import backtype.storm.Config;
+import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.StormTopology;
 import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.tuple.Fields;
-import com.hipstogram.storm.cassandra.IntegerCount;
-import com.hipstogram.storm.cassandra.TrackCountMapper;
+import com.hipstogram.storm.state.IntegerCount;
+import com.hipstogram.storm.state.TrackCountCassandraMapper;
 import com.hipstogram.storm.context.HipstogramContext;
 import com.hipstogram.storm.context.config.sections.KafkaSection;
 import com.hipstogram.storm.context.config.sections.ZookeeperSection;
 import com.hipstogram.storm.operator.ExtractTimeAndURI;
+import com.hipstogram.storm.state.TrackCountMongoDBMapper;
 import com.hmsonline.trident.cql.CassandraCqlMapState;
 import com.hmsonline.trident.cql.CassandraCqlStateFactory;
+import io.hipstogram.trident.mongodb.MongoDBMapState;
+import io.hipstogram.trident.mongodb.MongoDBStateFactory;
 import storm.kafka.BrokerHosts;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
@@ -51,10 +55,15 @@ public class HipstogramTopology
         spoutConf.scheme = new SchemeAsMultiScheme(new StringScheme());
         //spoutConf.forceFromStart = true;
 
-        // 3. Configure Cassandra
+        /* 3. Configure Cassandra
         CassandraCqlMapState.Options options = new CassandraCqlMapState.Options();
         options.keyspace = "hipstogram";
-        options.tableName = "transactions";
+        options.tableName = "transactions";*/
+
+        // 3. Configure MongoDB
+        MongoDBMapState.Options options = new MongoDBMapState.Options();
+        options.db = "test";
+        options.collection = "tracks";
 
         // 4. Create a Kafka spout
         OpaqueTridentKafkaSpout spout = new OpaqueTridentKafkaSpout(spoutConf);
@@ -68,7 +77,9 @@ public class HipstogramTopology
                 // will be processed by the same instance
                 .groupBy(new Fields("uri", "time"))
                 // 5.3. Update counters in Cassandra
-                .persistentAggregate(CassandraCqlMapState.opaque(new TrackCountMapper(), options), new IntegerCount(), new Fields("count"));
+                //.persistentAggregate(CassandraCqlMapState.opaque(new TrackCountCassandraMapper(), options), new IntegerCount(), new Fields("count"));
+                // 5.3. Update counters in MongoDB
+                .persistentAggregate(MongoDBMapState.opaque(new TrackCountMongoDBMapper(), options), new IntegerCount(), new Fields("count"));
 
         // 6. Return Storm topology
         return topology.build();
@@ -79,11 +90,13 @@ public class HipstogramTopology
         System.setProperty("config", "config/config.ini"); // TODO: Change this!!
         Config conf = new Config();
         conf.put(CassandraCqlStateFactory.TRIDENT_CASSANDRA_CQL_HOSTS, "192.168.2.100");
+        conf.put(MongoDBStateFactory.MONGODB_HOSTS, "192.168.2.100");
+        conf.put(MongoDBStateFactory.MONGODB_DB, "test");
+        conf.put(MongoDBStateFactory.MONGODB_COLLECTION, "tracks");
         conf.setNumWorkers(3);
 
         //LocalCluster cluster = new LocalCluster();
-        //cluster.submitTopology(HipstogramTopology.class.getSimpleName(), conf, buildTopology());
-        //cluster.submitTopology("hipstogram", conf, buildTopology());
+        //cluster.submitTopology("HipstogramLocal", conf, buildTopology());
         StormSubmitter.submitTopology("HipstogramTrackCounter", conf, buildTopology());
 
         //Thread.sleep(120000);

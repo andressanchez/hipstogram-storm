@@ -29,6 +29,7 @@ public class ExtractTimeAndURI extends BaseFunction
 {
     private static final long serialVersionUID = 1L;
     private static final int WINDOW = 5; // Seconds
+    //private static final Logger LOG = LoggerFactory.getLogger(ExtractTimeAndURI.class);
 
     @Override
     public void execute(TridentTuple tuple, TridentCollector collector)

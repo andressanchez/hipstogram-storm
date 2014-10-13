@@ -13,7 +13,7 @@
  *  limitations under the License.
  */
 
-package com.hipstogram.storm.cassandra;
+package com.hipstogram.storm.state;
 
 import java.io.Serializable;
 import java.util.List;
@@ -30,10 +30,10 @@ import com.hmsonline.trident.cql.mappers.CqlRowMapper;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
-public class TrackCountMapper implements CqlRowMapper<List<Object>, OpaqueValue>, Serializable
+public class TrackCountCassandraMapper implements CqlRowMapper<List<Object>, OpaqueValue>, Serializable
 {
     private static final long serialVersionUID = 1L;
-    //private static final Logger LOG = LoggerFactory.getLogger(TrackCountMapper.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(TrackCountCassandraMapper.class);
 
     public static final String KEYSPACE_NAME = "hipstogram";
     public static final String TABLE_NAME = "track_counts";

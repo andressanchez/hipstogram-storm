@@ -13,7 +13,7 @@
  *  limitations under the License.
  */
 
-package com.hipstogram.storm.cassandra;
+package com.hipstogram.storm.state;
 
 import storm.trident.operation.CombinerAggregator;
 import storm.trident.tuple.TridentTuple;
